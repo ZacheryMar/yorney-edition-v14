@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hacker OS - Yorney Edition v4.0</title>
+
+<style>
+body{
+    margin:0;
+    background:black;
+    color:#00ff9c;
+    font-family:'Courier New', monospace;
+    overflow:hidden;
+}
+
+/* MATRIX */
+#matrix{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:-1;
+    opacity:0.5;
+}
+
+/* LOGIN */
+#loginBox{
+    position:absolute;
+    top:30%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    text-align:center;
+    background:rgba(0,0,0,0.85);
+    padding:30px;
+    border-radius:10px;
+    box-shadow:0 0 20px #00ff9c;
+    border:1px solid #00ff9c;
+    z-index:10;
+}
+
+input{
+    display:block;
+    margin:15px auto;
+    padding:12px;
+    width:250px;
+    background:rgba(0,20,0,0.9);
+    border:1px solid #00ff9c;
+    color:#00ff9c;
+    text-align:center;
+    font-size:1.1rem;
+}
+
+button{
+    padding:10px 25px;
+    background:#00ff9c;
+    border:none;
+    color:black;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#fff;
+    box-shadow:0 0 15px #00ff9c;
+}
+
+/* PERFIL */
+#perfilBox{
+    display:none;
+    position:absolute;
+    top:18%;
+    left:50%;
+    transform:translateX(-50%);
+    width:340px;
+    background:rgba(0,0,0,0.92);
+    border:1px solid #00ff9c;
+    box-shadow:0 0 25px #00ff9c;
+    padding:25px;
+    border-radius:10px;
+    z-index:9;
+}
+
+#perfilBox h2{
+    text-align:center;
+}
+
+/* TERMINAL */
+#terminal{
+    position:fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+    height:45%;
+    background:rgba(0,5,0,0.92);
+    border-top:2px solid #00ff9c;
+    padding:15px;
+}
+
+#output{
+    margin:0;
+    padding:0;
+}
+
+#inputLine{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    margin:0;
+    padding:0;
+}
+
+.prompt{
+    color:#ff00ff;
+    margin:0;
+    padding:0;
+    line-height:1;
+}
+
+#cmd{
+    background:transparent;
+    border:none;
+    color:#00ff9c;
+    width:100%;
+    outline:none;
+    font-family: monospace;
+    font-size:1rem;
+    margin:0;
+    padding:0;
+    line-height:1;
+}
+
+#cmd::placeholder{
+    color:#00ff9c55;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="matrix"></canvas>
+
+<div id="loginBox">
+    <h2>🔐 ACCESO AL SISTEMA</h2>
+    <input id="user" value="YORNEY_ADMIN">
+    <input id="pass" placeholder="PIN de 4 dígitos (o 0000)">
+    <button onclick="login()">INICIAR SESIÓN</button>
+</div>
+
+<div id="perfilBox">
+    <h2>👤 PERFIL DESBLOQUEADO</h2>
+    <p><strong>Usuario:</strong> YORNEY_ADMIN</p>
+    <p><strong>Nombre:</strong> Yorney Administrador</p>
+    <p><strong>Estado:</strong> ✔ Acceso total</p>
+    <p><strong>Nivel:</strong> Administrador</p>
+    <p><strong>Sistema:</strong> Hacker OS v4.0</p>
+</div>
+
+<div id="terminal">
+    <div id="output"></div>
+    <div id="inputLine">
+        <span class="prompt">yorney@kali:~#</span>
+        <input id="cmd" onkeydown="enterCmd(event)">
+    </div>
+</div>
+
+<script>
+/* MATRIX */
+const canvas=document.getElementById("matrix");
+const ctx=canvas.getContext("2d");
+canvas.height=window.innerHeight;
+canvas.width=window.innerWidth;
+
+const letters="010101010101";
+const fontSize=16;
+const columns=canvas.width/fontSize;
+const drops=[];
+for(let i=0;i<columns;i++){drops[i]=1;}
+
+function drawMatrix(){
+    ctx.fillStyle="rgba(0,0,0,0.05)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle="#00ff9c";
+    ctx.font=fontSize+"px monospace";
+    for(let i=0;i<drops.length;i++){
+        const text=letters[Math.floor(Math.random()*letters.length)];
+        ctx.fillText(text,i*fontSize,drops[i]*fontSize);
+        if(drops[i]*fontSize>canvas.height && Math.random()>0.975){drops[i]=0;}
+        drops[i]++;
+    }
+}
+setInterval(drawMatrix,35);
+
+/* CLAVE */
+let clave = Math.floor(Math.random()*10000).toString().padStart(4,"0");
+
+/* LOGIN */
+function mostrarPerfil(){
+    document.getElementById("loginBox").style.display="none";
+    document.getElementById("perfilBox").style.display="block";
+}
+
+function login(){
+    let p=document.getElementById("pass").value;
+    if(p===clave || p==="0000"){
+        print("✔ ACCESO CONCEDIDO");
+        mostrarPerfil();
+    }else{
+        alert("❌ ACCESO DENEGADO");
+    }
+}
+
+/* TERMINAL */
+const output=document.getElementById("output");
+
+function print(text){
+    output.innerHTML+="<div>"+text+"</div>";
+    output.scrollTop=output.scrollHeight;
+}
+
+function enterCmd(e){
+    if(e.key==="Enter"){
+        let val=document.getElementById("cmd").value;
+        ejecutar(val);
+        document.getElementById("cmd").value="";
+    }
+}
+
+function analizarIntento(num){
+    let correctos=0;
+    for(let i=0;i<4;i++) if(num[i]===clave[i]) correctos++;
+    return "Coincidencias: "+correctos;
+}
+
+/* COMANDOS */
+function ejecutar(cmd){
+    print("<span style='color:white'>yorney@kali:~# "+cmd+"</span>");
+    let c=cmd.toLowerCase();
+
+    if(c==="help"){
+        print("cls, scan, access, attack ####, crack, reveal");
+    }
+
+    else if(c==="cls"){
+        output.innerHTML="";
+    }
+
+    else if(c==="scan"){
+        print("Escaneando...");
+        setTimeout(()=>print("Puertos abiertos: 22,80,443"),500);
+    }
+
+    else if(c==="access"){
+        print("Rango 0000-9999");
+    }
+
+    else if(c.startsWith("attack ")){
+        let intento=c.replace("attack ","").trim();
+        if(intento===clave){
+            print("🔓 CLAVE CORRECTA: "+clave);
+            mostrarPerfil();
+        }else{
+            print("❌ "+analizarIntento(intento));
+        }
+    }
+
+    else if(c==="crack"){
+        print("🧠 Descifrando...");
+        let i=0;
+        let t=setInterval(()=>{
+            let n=i.toString().padStart(4,"0");
+            if(n===clave){
+                clearInterval(t);
+                print("🔓 CLAVE DESCIFRADA: "+clave);
+                mostrarPerfil();
+            }
+            i++;
+        },2);
+    }
+
+    else if(c==="reveal"){
+        print("🧪 CLAVE: "+clave);
+    }
+
+    else{
+        print("Comando no reconocido");
+    }
+}
+</script>
+
+</body>
+</html>
